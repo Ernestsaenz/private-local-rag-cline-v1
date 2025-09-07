@@ -1,0 +1,25 @@
+{
+  "timestamp": 1757250556.168629,
+  "embed_model": "text-embedding-qwen3-embedding-4b",
+  "prompts_version": "qwen3-v1",
+  "chunk_size": 500,
+  "overlap": 100,
+  "files": [
+    {
+      "path": "/Users/flo/Documents/code/local-rag-embedding-gemma/pdfs/Americas-AI-Action-Plan.pdf",
+      "mtime": 1757214028358026611,
+      "size": 521617
+    },
+    {
+      "path": "/Users/flo/Documents/code/local-rag-embedding-gemma/pdfs/M-25-21-Accelerating-Federal-Use-of-AI-through-Innovation-Governance-and-Public-Trust.pdf",
+      "mtime": 1757214109284727384,
+      "size": 2629748
+    },
+    {
+      "path": "/Users/flo/Documents/code/local-rag-embedding-gemma/pdfs/M-25-22-Driving-Efficient-Acquisition-of-Artificial-Intelligence-in-Government.pdf",
+      "mtime": 1757214088453312734,
+      "size": 1399862
+    }
+  ],
+  "digest": "e6b3d7a07206c06eb6652e3c49840e235677777b5417eef9f99215da37b20903"
+}

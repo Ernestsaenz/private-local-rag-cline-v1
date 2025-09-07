@@ -1,35 +1,40 @@
+# ingest.py
 from pypdf import PdfReader
-import faiss, numpy as np
-from embedder_lms import embed_texts
+import os
+import faiss
+from embedder_lms import embed_docs
 
 def load_pdfs(paths):
     docs = []
     for p in paths:
-        txts = []
         reader = PdfReader(p)
-        for pg in reader.pages:
-            t = (pg.extract_text() or "").strip()
-            if t: txts.append(t)
-        full = "\n".join(txts)
-        if full:
-            docs.append({"title": p, "text": full})
+        pages = []
+        for i, pg in enumerate(reader.pages):
+            txt = (pg.extract_text() or "").strip()
+            if txt:
+                pages.append({"page": i+1, "text": txt})
+        if pages:
+            docs.append({"title": p, "pages": pages})
     return docs
 
-def chunk(text, size=800, overlap=120):
-    words, out, step = text.split(), [], max(1, size - overlap)
-    for i in range(0, len(words), step):
-        part = " ".join(words[i:i+size])
-        if part.strip(): out.append(part)
-    return out
+def chunk_page(text, size=500, overlap=100):
+    words = text.split()
+    step = max(1, size - overlap)
+    return [" ".join(words[i:i+size]) for i in range(0, len(words), step)]
 
-def build_index(pdf_paths):
+def build_index(pdf_paths, chunk_size=500, overlap=100):
     docs = load_pdfs(pdf_paths)
-    chunks, meta = [], []
+    chunks, meta, titled_chunks = [], [], []
     for d in docs:
-        for c in chunk(d["text"]):
-            chunks.append(c); meta.append(d["title"])
-    X = embed_texts(chunks)
-    faiss.normalize_L2(X)                           # cosine via inner product
+        fname = os.path.basename(d["title"])
+        for page in d["pages"]:
+            for c in chunk_page(page["text"], size=chunk_size, overlap=overlap):
+                chunks.append(c)
+                meta.append({"title": d["title"], "page": page["page"]})
+                titled_chunks.append((fname, c))  # include filename if you want title signal later
+
+    X = embed_docs(titled_chunks)
+    faiss.normalize_L2(X)
     index = faiss.IndexFlatIP(X.shape[1])
     index.add(X)
     return index, chunks, meta
