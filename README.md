@@ -14,7 +14,7 @@ Everything runs fully **offline** on your machine — no API calls, no cloud.
 
 ## Example
 
-![Screenshot of Gradio UI](assets/screenshot.png)
+![Screenshot of Gradio UI](assets/demo.mp4)
 
 ---
 
