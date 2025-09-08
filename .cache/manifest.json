@@ -1,7 +1,7 @@
 {
-  "timestamp": 1757250556.168629,
-  "embed_model": "text-embedding-qwen3-embedding-4b",
-  "prompts_version": "qwen3-v1",
+  "timestamp": 1757255269.944374,
+  "embed_model": "text-embedding-qwen3-embedding-0.6b",
+  "prompts_version": "qwen3-v2",
   "chunk_size": 500,
   "overlap": 100,
   "files": [
@@ -21,5 +21,5 @@
       "size": 1399862
     }
   ],
-  "digest": "e6b3d7a07206c06eb6652e3c49840e235677777b5417eef9f99215da37b20903"
+  "digest": "686ba1dc3fea0b1b911b8742baf1b4a10cfcd1cbbdd2ece720315e9e332a21dd"
 }

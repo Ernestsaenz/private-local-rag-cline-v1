@@ -5,7 +5,7 @@ import os
 
 LMSTUDIO_BASE = "http://localhost:1234/v1"
 # Set this to the EXACT id shown by /v1/models in LM Studio
-EMBED_MODEL = os.environ.get("EMBED_MODEL", "text-embedding-qwen3-embedding-4b")
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "text-embedding-qwen3-embedding-0.6b")
 
 client = OpenAI(base_url=LMSTUDIO_BASE, api_key="lm-studio")
 

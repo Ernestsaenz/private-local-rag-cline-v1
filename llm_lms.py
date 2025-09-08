@@ -2,7 +2,7 @@
 from openai import OpenAI
 
 LMSTUDIO_BASE = "http://localhost:1234/v1"
-LLM_MODEL = "qwen_qwen3-4b-instruct-2507"   # or the exact name shown in LM Studio
+LLM_MODEL = "qwen/qwen3-1.7b" # "qwen_qwen3-4b-instruct-2507"   # or the exact name shown in LM Studio
 
 client = OpenAI(base_url=LMSTUDIO_BASE, api_key="lm-studio")
 
