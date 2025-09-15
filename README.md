@@ -167,10 +167,6 @@ Place your guideline/consensus/review PDFs into `pdfs/`. Examples:
 - PBC: diagnostic and treatment guidelines, response criteria.
 - PSC: diagnostic, surveillance, and management guidance.
 
-Tip: Use descriptive filenames; the UI shows source labels like `filename.pdf (p.X)`.
-
-You mentioned additional PDFs for PBC/PSC will be added later — simply drop them into `pdfs/` and rebuild the index.
-
 ## 🛡️ Safety & Privacy
 
 - Runs fully offline on your machine. No network calls from inference.
@@ -181,6 +177,3 @@ You mentioned additional PDFs for PBC/PSC will be added later — simply drop th
 
 Prototype for experimentation. No warranty.
 
----
-
-**🎉 Your RAG system is ready for AIH/PBC/PSC workflows — all local, no external dependencies.**
