@@ -1,4 +1,15 @@
-# gradio_app.py
+"""
+Gradio Web UI for the local RAG system (autoimmune liver diseases: AIH, PBC, PSC).
+
+Features:
+- Upload/list PDFs and build or load cached FAISS index.
+- Ask questions with diversification and optional MMR re-ranking.
+- Shows answer and the list of cited source labels.
+
+Uses `ingest` for indexing, `rag` for retrieval and prompt building,
+and `llm_lms.generate_answer` with a clinical prompt oriented to AIH/PBC/PSC.
+"""
+
 import os
 import shutil
 import json
@@ -100,6 +111,7 @@ def _label(m):
 
 # ---------- gradio callbacks ----------
 def list_pdfs(folder):
+    """List PDFs in the target folder for display."""
     try:
         pdfs = scan_pdfs(folder)
         return "\n".join(pdfs) if pdfs else "(no PDFs found)"
@@ -107,6 +119,7 @@ def list_pdfs(folder):
         return f"Error listing PDFs: {e}"
 
 def add_uploads_to_folder(files, folder):
+    """Save uploaded files into the PDF folder."""
     if not files:
         return "No files uploaded."
     try:
@@ -192,8 +205,11 @@ def ask(query, k, fetch_k, per_file, use_mmr, mmr_lambda, threshold):
 
 # ---------- UI ----------
 def build_ui():
-    with gr.Blocks(title="Local RAG (Qwen3 Embedding + LM Studio)") as demo:
-        gr.Markdown("## Local RAG — Qwen3 Embedding (LM Studio)\nRun everything locally. Make sure LM Studio is serving your embedding + chat models.")
+    with gr.Blocks(title="Local RAG — Autoimmune Liver (AIH/PBC/PSC)") as demo:
+        gr.Markdown(
+            "## Local RAG — Autoimmune Liver Diseases (AIH, PBC, PSC)\n"
+            "Run everything locally with LM Studio. Upload guideline/consensus PDFs and ask clinical questions."
+        )
 
         with gr.Row():
             folder_in = gr.Textbox(value="pdfs", label="PDF folder path")
@@ -213,7 +229,7 @@ def build_ui():
         build_status = gr.Textbox(label="Index status")
 
         gr.Markdown("### Ask")
-        query = gr.Textbox(label="Query", placeholder="e.g., who presided each meeting?", lines=2)
+        query = gr.Textbox(label="Query", placeholder="e.g., initial steroid regimen for AIH flare?", lines=2)
 
         with gr.Row():
             k = gr.Slider(1, 8, 3, step=1, label="k (final contexts)")

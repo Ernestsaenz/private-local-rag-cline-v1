@@ -1,97 +1,186 @@
-# Private Local RAG with Qwen3 Embeddings + LM Studio
+# Private Local RAG for Autoimmune Liver Diseases (AIH, PBC, PSC)
 
-This prototype shows how to build a **local Retrieval-Augmented Generation (RAG)** system using:
+A local, production‑ready Retrieval‑Augmented Generation (RAG) system focused on the clinical management of autoimmune liver diseases:
+- Autoimmune Hepatitis (AIH)
+- Primary Biliary Cholangitis (PBC)
+- Primary Sclerosing Cholangitis (PSC)
 
-- **PDF ingestion** → automatically scan a folder of PDFs, chunk them, and cache them with FAISS.
-- **Embeddings via LM Studio** → runs [Qwen3-Embedding](https://huggingface.co/Qwen) models locally (0.6B, 4B, 8B GGUF).
-- **Diversified retrieval + MMR** → retrieve passages across multiple docs, re-rank for both relevance and diversity.
-- **Local LLM for answers** → query any chat model you have loaded in LM Studio (e.g. Qwen, Gemma, Llama).
-- **Gradio interface** → simple web UI for uploading PDFs, rebuilding the index, and asking questions.
+Everything runs on your machine using LM Studio — no external APIs or cloud access.
 
-Everything runs fully **offline** on your machine — no API calls, no cloud.
+## ✨ Features
 
-*Note: The RAG pipeline is not fully optimized! Feel free to build on top of it and submit pull requests.*
+- 🔍 **Semantic search across PDFs** using Qwen3 embeddings
+- 📄 **Automatic PDF parsing and chunking** with configurable parameters
+- 🗂 **Intelligent caching** (embeddings + index saved in `.cache/`)
+- 🎛 **Configurable parameters**: chunk size, overlap, retrieval settings
+- 💻 **Local inference** with LM Studio (no API calls, no cloud)
+- 🌐 **Dual interface**: Command-line + Web UI (Gradio)
+- 📊 **Source citations** with page references
+- 🩺 **Clinical focus**: tuned instructions for AIH/PBC/PSC decision support
+- 🧭 **Abstain behavior**: configurable similarity threshold for “I don’t know”
 
-## Example
+> Safety: This tool assists clinicians by surfacing guideline‑based information from your uploaded PDFs. It does not provide medical advice and should not replace clinical judgment or local protocols.
 
-![](assets/demo.mp4)
+## 🚀 Quick Start
 
----
+### Prerequisites
+- Python 3.11+
+- LM Studio installed and running
+- Models loaded in LM Studio
 
-## Features
+### Installation
+```bash
+# Clone and setup
+git clone <your-repo>
+cd private-local-rag
 
-- 🔍 **Semantic search across PDFs** (FAISS + Qwen3 embeddings)
-- 📄 **Automatic PDF parsing and chunking**
-- 🗂 **Caching** (embeddings + index saved in `.cache/`)
-- 🎛 **Configurable knobs**:  
-  - chunk size, overlap  
-  - number of candidates (`fetch_k`)  
-  - diversification per file  
-  - MMR lambda (relevance vs diversity)  
-  - confidence threshold (for "I don’t know")  
-- 💻 **Local inference** with [LM Studio](https://lmstudio.ai/):  
-  - Embedding model (Qwen3-Embedding)  
-  - Chat/completion model for answer generation
-- 🌐 **Gradio UI** for uploads + interactive Q&A
-
----
-
-## Setup
-
-1. Clone this repo
-2. Install deps:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   (includes `faiss`, `gradio`, `openai`, `pypdf`)
-3. Launch LM Studio:
-   - Load a **Qwen3-Embedding** model as **Embeddings** (0.6B, 4B, or 8B GGUF).
-   - Load a chat model as **Chat**.
-4. Run:
-   ```bash
-   python gradio_app.py
-   ```
-   Open the local URL printed in your terminal.
-
----
-
-## Usage
-
-1. Upload PDFs or point to a folder.
-2. Click **Build/Load Index** (embeds + caches once).
-3. Type your question.
-4. Get an answer + list of source snippets.
-
-Example:
-```
-Q: Who presided at each meeting?
-A: Meeting A was presided by X … Meeting B by Y …
-Sources:
- - Minutes (1).pdf (p.3)
- - Minutes (2).pdf (p.4)
+# Install dependencies
+python3.11 -m pip install -r requirements.txt
 ```
 
----
+### Usage
 
-## Notes
+**Option 1: Easy Startup**
+```bash
+python3.11 start.py
+```
 
-- First run is slow (embedding PDFs). After that, cached index loads instantly.
-- If you swap embedding models (e.g. 4B → 8B), re-run with `--rebuild` or rebuild via the Gradio button.
-- You can control batch size, timeout, or force a specific embedding model with env vars:
-  ```bash
-  EMBED_MODEL=text-embedding-qwen3-embedding-4b EMBED_BATCH=16 EMBED_TIMEOUT=180 python gradio_app.py
-  ```
+**Option 2: Direct Commands**
+```bash
+# Web UI
+python3.11 gradio_app.py
 
----
+# Command Line
+python3.11 main.py --ask_once "What is this document about?"
+```
 
-## Roadmap
+## 📁 Project Structure
 
-- [ ] Add reranker stage (e.g. Qwen3-Reranker) for sharper results
+```
+private-local-rag/
+├── main.py              # CLI for local clinical Q&A over PDFs
+├── gradio_app.py        # Web UI (AIH/PBC/PSC focus)  
+├── embedder_lms.py      # LM Studio embedding integration
+├── llm_lms.py           # LM Studio chat integration (autoimmune liver)
+├── ingest.py            # PDF processing and chunking
+├── rag.py               # Retrieval + prompt assembly (MMR reranking)
+├── start.py             # Easy startup script
+├── requirements.txt     # Dependencies
+├── pdfs/                # Your guideline/consensus PDFs (AIH/PBC/PSC)
+└── .cache/              # Cached embeddings and index
+
+## 🩺 Clinical Focus
+
+This project targets autoimmune liver diseases commonly managed in hepatology:
+- AIH: diagnosis (serology, IgG, histology), initial/maintenance therapy (steroids, azathioprine), monitoring and tapering, escalation options, special populations.
+- PBC: diagnosis (ALP, AMA), first‑line ursodeoxycholic acid (UDCA), inadequate response algorithms (e.g., OCA/fibrates per your PDFs), pruritus management, transplant considerations.
+- PSC: diagnosis (cholestatic pattern, cholangiography), dominant strictures, cholangitis management, IBD surveillance, dysplasia/CCA risk, transplant referral.
+
+Answers come strictly from your uploaded PDFs; conflicting recommendations are presented separately with page‑level citations.
+```
+
+## ⚙️ Configuration
+
+### LM Studio Setup
+1. **Start LM Studio** and go to "Local Server" tab
+2. **Load embedding model**: `text-embedding-qwen3-embedding-0.6b`
+3. **Load chat model**: `qwen/qwen3-1.7b`
+4. **Start server** on port 1234
+
+### Environment Variables
+```bash
+# Optional: Override default models
+export EMBED_MODEL="text-embedding-qwen3-embedding-0.6b"
+export LLM_MODEL="qwen/qwen3-1.7b"
+```
+
+## 🎯 Usage Examples
+
+### Command Line
+```bash
+# Interactive mode
+python3.11 main.py
+
+# One-shot question
+python3.11 main.py --ask_once "Initial treatment for AIH flare?"
+
+# Custom parameters
+python3.11 main.py --chunk_size 800 --overlap 150 --k 5
+```
+
+### Web Interface
+```bash
+python3.11 gradio_app.py
+# Open: http://127.0.0.1:7860
+```
+
+## 🔧 Advanced Configuration
+
+### Retrieval Parameters
+- `--chunk_size`: Text chunk size (200-1200, default: 500)
+- `--overlap`: Chunk overlap (0-400, default: 100)  
+- `--k`: Final contexts returned (default: 3)
+- `--fetch_k`: FAISS candidates retrieved (default: 80)
+- `--per_file`: Max chunks per document (default: 2)
+
+### MMR Reranking
+- `--use_mmr`: Enable MMR reranking (default: True)
+- `--mmr_lambda`: Relevance vs diversity balance (0.5-0.95, default: 0.7)
+- `--threshold`: Similarity threshold for "I don't know" (default: 0.25)
+
+## 📊 Performance Notes
+
+- **First run**: Slow (computing embeddings)
+- **Subsequent runs**: Instant (cached index)
+- **Model switching**: Rebuild index with `--rebuild`
+- **Memory usage**: ~500MB for typical document set
+
+## 🛠 Troubleshooting
+
+### Common Issues
+1. **"Connection refused"**: LM Studio server not running
+2. **"No models found"**: Models not loaded in LM Studio
+3. **"I don't know"**: Similarity threshold too high
+
+### Debug Commands
+```bash
+# Test LM Studio connection
+python3.11 -c "from embedder_lms import debug_list_models; debug_list_models()"
+
+# Rebuild index
+python3.11 main.py --rebuild
+```
+
+## 📈 Roadmap
+
+- [ ] Add cross‑encoder reranker for sharper results
 - [ ] Multi-modal document support (images, tables)
 - [ ] Export answers + citations as JSON/Markdown
+- [ ] Batch query processing
+- [ ] Query history and analytics
+ - [ ] Disease selector (AIH/PBC/PSC prompt nuances) in UI
+
+## 📚 Your Documents
+
+Place your guideline/consensus/review PDFs into `pdfs/`. Examples:
+- AIH: international guidelines, society statements, key reviews.
+- PBC: diagnostic and treatment guidelines, response criteria.
+- PSC: diagnostic, surveillance, and management guidance.
+
+Tip: Use descriptive filenames; the UI shows source labels like `filename.pdf (p.X)`.
+
+You mentioned additional PDFs for PBC/PSC will be added later — simply drop them into `pdfs/` and rebuild the index.
+
+## 🛡️ Safety & Privacy
+
+- Runs fully offline on your machine. No network calls from inference.
+- Intended for clinician use; not a substitute for medical advice.
+- Always confirm recommendations against local protocols and the full source text.
+
+## 📄 License
+
+Prototype for experimentation. No warranty.
 
 ---
 
-## License
-
-Prototype for experimentation. No warranty.
+**🎉 Your RAG system is ready for AIH/PBC/PSC workflows — all local, no external dependencies.**

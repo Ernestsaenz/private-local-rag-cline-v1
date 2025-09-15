@@ -1,4 +1,18 @@
-# rag.py
+"""
+Retrieval and prompt construction utilities for clinical Q&A.
+
+Functions:
+- `search_diverse`: Retrieve top candidates from FAISS and diversify across files.
+- `mmr`: Re-rank candidates with embedding-only Maximal Marginal Relevance.
+- `make_prompt`: Build the user message with SOURCES for the chat model.
+
+Notes:
+- Designed to surface page‑level evidence for autoimmune liver diseases (AIH, PBC, PSC).
+- The app can abstain ("I don't know") based on a similarity threshold.
+
+Inputs/Outputs align with `ingest.build_index` artifacts and `embedder_lms`.
+"""
+
 import faiss, numpy as np
 from collections import defaultdict
 
@@ -49,8 +63,9 @@ def mmr(query_vec, cand_idxs, chunks, embed_texts, topn=5, lambda_mult=0.7):
 
 def make_prompt(query, contexts, max_context_chars=9000, per_snippet_max=1500):
     """
-    Build the LLM prompt from query + retrieved contexts.
-    contexts: list of (label, text) tuples
+    Build the LLM prompt (user message) from query + retrieved contexts.
+    `contexts` is a list of (label, text) tuples, where label typically looks
+    like "filename.pdf (p.X)" and text is the chunk content.
     """
     chunks = []
     total = 0
@@ -64,8 +79,8 @@ def make_prompt(query, contexts, max_context_chars=9000, per_snippet_max=1500):
 
     ctx = "".join(chunks)
     return f"""Answer the question strictly based on the SOURCES below.
-If different sources say different things, list them separately.
-Do not merge them.
+If different sources say different things, list them separately with their labels.
+Do not merge or invent information. If insufficient information is present, say you don't know.
 
 Question: {query}
 

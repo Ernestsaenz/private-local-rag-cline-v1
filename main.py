@@ -1,10 +1,29 @@
+"""
+Command-line entrypoint for the local RAG pipeline (autoimmune liver diseases).
+
+Clinical focus:
+- Autoimmune Hepatitis (AIH)
+- Primary Biliary Cholangitis (PBC)
+- Primary Sclerosing Cholangitis (PSC)
+
+Workflow:
+1) Scan guideline/consensus PDFs in `--folder`.
+2) Build or load cached FAISS index (with manifest-based invalidation).
+3) For each query: retrieve, diversify, optionally MMR re-rank, construct prompt,
+   and call the chat model via `llm_lms.generate_answer`.
+
+Artifacts are cached to `.cache/` (index, chunks, metadata, manifest).
+
+Safety: Answers are generated strictly from your PDFs with page-level citations; the
+tool supports clinician decision-making but does not replace medical judgment.
+"""
+
 import argparse, glob, json, os, pickle, time, hashlib
 import faiss
 from ingest import build_index
-from embedder_lms import debug_list_models, EMBED_MODEL
+from embedder_lms import debug_list_models, EMBED_MODEL, embed_queries, embed_texts
 from llm_lms import generate_answer
 from rag import search_diverse, make_prompt, mmr
-from embedder_lms import debug_list_models, EMBED_MODEL, embed_queries, embed_texts
 
 CACHE_DIR = ".cache"
 INDEX_PATH = os.path.join(CACHE_DIR, "index.faiss")
@@ -12,14 +31,16 @@ CHUNKS_PATH = os.path.join(CACHE_DIR, "chunks.pkl")
 META_PATH = os.path.join(CACHE_DIR, "meta.pkl")
 MANIFEST_PATH = os.path.join(CACHE_DIR, "manifest.json")
 
-def scan_pdfs(folder):
+def scan_pdfs(folder: str):
+    """Return sorted list of PDF paths in a folder."""
     return sorted(glob.glob(os.path.join(folder, "*.pdf")))
 
-def file_fingerprint(path):
+def file_fingerprint(path: str):
     st = os.stat(path)
     return {"path": os.path.abspath(path), "mtime": st.st_mtime_ns, "size": st.st_size}
 
 def compute_manifest(pdf_paths, chunk_size, overlap):
+    """Compute a manifest that includes inputs affecting the index."""
     return {
         "timestamp": time.time(),
         "embed_model": EMBED_MODEL,
@@ -30,6 +51,7 @@ def compute_manifest(pdf_paths, chunk_size, overlap):
     }
 
 def digest_manifest(m):
+    """Stable digest of the manifest; used to decide when to rebuild."""
     h = hashlib.sha256()
     h.update(m["embed_model"].encode())
     h.update(str(m["chunk_size"]).encode())
@@ -41,6 +63,7 @@ def digest_manifest(m):
     return h.hexdigest()
 
 def load_cached():
+    """Load cached index + artifacts if available and consistent."""
     if not (os.path.exists(INDEX_PATH) and os.path.exists(CHUNKS_PATH) and os.path.exists(META_PATH) and os.path.exists(MANIFEST_PATH)):
         return None
     try:
@@ -53,6 +76,7 @@ def load_cached():
         return None
 
 def save_cache(index, chunks, meta, manifest):
+    """Persist FAISS index and artifacts to `.cache/`."""
     os.makedirs(CACHE_DIR, exist_ok=True)
     faiss.write_index(index, INDEX_PATH)
     with open(CHUNKS_PATH, "wb") as f: pickle.dump(chunks, f)
@@ -60,6 +84,7 @@ def save_cache(index, chunks, meta, manifest):
     with open(MANIFEST_PATH, "w") as f: json.dump(manifest, f, indent=2)
 
 def needs_rebuild(new_manifest, existing_manifest):
+    """Return True if cached index is stale vs new manifest inputs."""
     return (existing_manifest is None) or (existing_manifest.get("digest") != new_manifest.get("digest"))
 
 def _label(m):
@@ -68,9 +93,6 @@ def _label(m):
         if t and p: return f"{t} (p.{p})"
         if t: return t
     return str(m)
-
-from rag import search_diverse, make_prompt, mmr
-from embedder_lms import embed_queries, embed_texts  # embed_texts used inside MMR
 
 def run_query(
     q,
@@ -84,6 +106,7 @@ def run_query(
     mmr_lambda=0.7,
     threshold=0.25,   # NEW knob
 ):
+    """Retrieve, optionally rerank, and generate an answer for a single query."""
     # 1) recall + diversify
     q_vec, picks = search_diverse(q, index, embed_queries, meta, fetch_k=fetch_k, per_file=per_file)
 
@@ -122,6 +145,7 @@ def run_query(
         print(" -", lbl)
 
 def main():
+    """CLI for interactive queries or one-shot question over local PDFs."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--folder", default="pdfs")
     ap.add_argument("--rebuild", action="store_true")
